@@ -106,55 +106,38 @@ class ReportWriter:
         ''' This writes a comment for a student report. '''
         self.assigntexttotable(self.marks, 13, 0, 1, "Comment: " + comment)
 
-    def save(self, newfilename):
-        ''' This saves the document to a new file (newfilename). '''
-        self.document.save(newfilename)
+    def save(self, newfilename = None):
+        ''' This saves the document to a new file (newfilename). If no argument
+        is present, information is saved to the original source.
+        '''
+        if newfilename:
+            self.document.save(newfilename)
+        else:
+            self.document.save(self.filename)
 
     @staticmethod
-    def WriteReports(template, inputyaml, outputdir):
+    def WriteReports(template, studentyaml, outputdir, dateyaml = None):
         ''' Takes a inputyaml file, which contains report data, and writes
         it to an output directory
         '''
-        reportdata = yaml.load_all(file(inputyaml, 'r'))
+        reportdata = yaml.load_all(file(studentyaml, 'r'))
+        thedates = None
+        if dateyaml:
+            thedates = yaml.load(file(dateyaml, 'r'))
         for report in reportdata:
             R = ReportWriter(template)
             R.writeinitial(report[0])
+            if thedates:
+                R.writedates(thedates)
             if report[1]["comment"]:
                 R.writecomment(report[1]["comment"])
             R.writemarks(report[2]["start"], report[2]["end"], report[3:])
             R.save(os.path.join(outputdir, report[0]["name"]+".docx"))
 
-# Commented out, but can be uncommented as necessary.
-#
-#document = Document('Sample.docx')
-#thecore = document.core_properties
-#
-#tables = document.tables
-#headingtable = tables[0]
-#print [i.text for i in headingtable.cell(0,0).paragraphs[2].runs]
-#print [i.text for i in headingtable.cell(0,1).paragraphs[2].runs]
-#print [i.text for i in headingtable.cell(0,2).paragraphs]
-#print [i.text for i in headingtable.cell(1,2).paragraphs]
-#print [i.text for i in headingtable.cell(0,3).paragraphs]
-#print [i.text for i in headingtable.cell(0,4).paragraphs]
-#markstable = tables[1]
-#for i in range(len(markstable.rows)):
-#    for j in range(len(markstable.columns)):
-#        print [k.text for k in markstable.cell(i,j).paragraphs]
-#thecore.author
-#document.save('demo.docx')
-#
-#R = ReportWriter('Sample.docx')
-#R.writeinitial({"id":"667", "name": "Biggles", "course": "DDD", "cl":"Int",
-#    "sd":"01/01/2000", "ed":"31/12/2012"})
-#R.writedates([unichr(i + 64) for i in range(10)])
-#R.writemarks(1, 10,  [[unichr(j + 75 + i) for j in range(6)]
-#    for i in range(12)])
-#R.writecomment("Blah blah blah")
-#R.save('Other.docx')
-#
-#data = yaml.load_all(file('report.yml', 'r'))
-#for item in data:
-#    print item
+#dates = ["23/10/17", "30/10/17", "06/11/17", "13/11/17", "20/11/17",
+#    "27/11/17", "04/12/17", "11/12/17", "18/12/17", "01/01/18"]
 
-ReportWriter.WriteReports("Sample.docx", "report.yml", "test")
+#datedata = yaml.load(file("sampledate.yml", 'r'))
+#print datedata
+ReportWriter.WriteReports("Template1.docx", "upperint.yml",
+    "upper", "sampledate.yml")

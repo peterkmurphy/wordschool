@@ -37,7 +37,6 @@ class ReportWriter:
         else:
             table.cell(row,col).paragraphs[parnum].add_run(text)
 
-
     def writeinitial(self, initid):
         ''' This writes the report using a dict (initid) with the
         following possible keys:
@@ -116,28 +115,98 @@ class ReportWriter:
             self.document.save(self.filename)
 
     @staticmethod
-    def WriteReports(template, studentyaml, outputdir, dateyaml = None):
-        ''' Takes a inputyaml file, which contains report data, and writes
-        it to an output directory
+    def WriteReports(mode, outputdir, reportyaml, template=None):
+        ''' This is the main method for the ReportWriter class. Its purpose,
+        as the name says, is to write reports, based on data in a YAML file,
+        to Word documents in a directory. The WriteReports takes the following
+        arguments:
+
+        mode: what is the main goal to be achived in using the function? The
+        modes are:
+            - "N": for new: takes a template, writes the report data from the
+            YAML file to it, and saves it as a file to the output directory. The
+            file name of the report is always derived from the name of the
+            student (which is in the report). This mode may overwrite existing
+            reports, so use with caution. However, this mode is probably suited
+            for a new class, where reports need to created from scratch.
+            - "E": for existing: looks for student names in the report as
+            above, and looks for files in the output directory matching those
+            names. When such files are found, data from the YAML file is
+            appended to the file, but existing data is not overwritten. This
+            mode is probably suited for an existing class with existing
+            class records.
+            - "T": tidy the dates. Looks for all Word docs in a directory, and
+            sets the term dates to new values specifed in the YAML file. This
+            mode is used when there are existing reports that need to be reused
+            for a new term.
+        outputdir: the name of the directory where reports need to be written.
+        This could be an absolute path, or one relative to the current working
+        directory.
+        reportyaml: the YAML file that contains the report data. This should
+        consist of several YAML documents. If there is data specifying the term
+        dates, this should be the first document inside. (This function can
+        automatically check if there is term date data.) Subsequent documents
+        should all correspond to student data, with each student represented
+        by a single YAML document.
+        template: the file name of a .docx word which can be used as a template
+        for creating templates. This is used with "N" (new) mode.
         '''
-        reportdata = yaml.load_all(file(studentyaml, 'r'))
-        thedates = None
-        if dateyaml:
-            thedates = yaml.load(file(dateyaml, 'r'))
-        for report in reportdata:
-            R = ReportWriter(template)
-            R.writeinitial(report[0])
-            if thedates:
-                R.writedates(thedates)
-            if report[1]["comment"]:
-                R.writecomment(report[1]["comment"])
-            R.writemarks(report[2]["start"], report[2]["end"], report[3:])
-            R.save(os.path.join(outputdir, report[0]["name"]+".docx"))
+        reportdata = yaml.load_all(file(reportyaml, 'r'))
+
+# Check for date data and student data (if either thing exists)
+
+        if isinstance(reportdata[0][0], dict):
+            thedates = None
+            thestudents = reportdata
+        else:
+            thedates = reportdata[0]
+            thestudents = reportdata[1:]
+
+# Are we dealing with tidy mode?
+
+        if mode == 'T':
+            os.chdir(outputdir)
+            for existreport in glob.glob("*.docx"):
+                R = ReportWriter(template)
+                if thedates:
+                    R.writedates(thedates)
+                R.save()
+
+        else:
+            for student in thestudents:
+                studentname = os.path.join(outputdir,
+                    student[0]["name"]+".docx")
+                if mode == "N":
+                    R = ReportWriter(template)
+                else:
+                    R = ReportWriter(studentname)
+                R.writeinitial(report[0])
+                if thedates:
+                    R.writedates(thedates)
+                if report[1]["comment"]:
+                    R.writecomment(report[1]["comment"])
+                R.writemarks(report[2]["start"], report[2]["end"], report[3:])
+                if mode == "N":
+                    R.save(studentname)
+                else:
+                    R.save()
+
 
 #dates = ["23/10/17", "30/10/17", "06/11/17", "13/11/17", "20/11/17",
 #    "27/11/17", "04/12/17", "11/12/17", "18/12/17", "01/01/18"]
 
 #datedata = yaml.load(file("sampledate.yml", 'r'))
 #print datedata
-ReportWriter.WriteReports("Template1.docx", "upperint.yml",
-    "upper", "sampledate.yml")
+#ReportWriter.WriteReports("Template1.docx", "upperint.yml",
+#    "upper", "sampledate.yml")
+
+print "Hello"
+# Modifications
+# A Mode (New, Existing, All in Directory)
+# B Add filename extension ("docx")
+# C Look for all files in a Directory
+# Document them.
+import glob
+cwd = os.getcwd()
+for file in glob.glob("*.docx"):
+    print(file)

@@ -3,6 +3,7 @@
 from docx import Document
 import yaml
 import os
+import glob
 
 class ReportWriter:
     ''' This is for writing student reports using Word. '''
@@ -151,7 +152,7 @@ class ReportWriter:
         template: the file name of a .docx word which can be used as a template
         for creating templates. This is used with "N" (new) mode.
         '''
-        reportdata = yaml.load_all(file(reportyaml, 'r'))
+        reportdata = list(yaml.load_all(open(reportyaml, 'r')))
 
 # Check for date data and student data (if either thing exists)
 
@@ -167,7 +168,7 @@ class ReportWriter:
         if mode == 'T':
             os.chdir(outputdir)
             for existreport in glob.glob("*.docx"):
-                R = ReportWriter(template)
+                R = ReportWriter(existreport)
                 if thedates:
                     R.writedates(thedates)
                 R.save()
@@ -180,33 +181,29 @@ class ReportWriter:
                     R = ReportWriter(template)
                 else:
                     R = ReportWriter(studentname)
-                R.writeinitial(report[0])
+                R.writeinitial(student[0])
                 if thedates:
                     R.writedates(thedates)
-                if report[1]["comment"]:
-                    R.writecomment(report[1]["comment"])
-                R.writemarks(report[2]["start"], report[2]["end"], report[3:])
+                if len(student) > 1:
+                    if student[1]["comment"]:
+                        R.writecomment(student[1]["comment"])
+                if len(student) > 2:
+                    R.writemarks(student[2]["start"], student[2]["end"],
+                        student[3:])
                 if mode == "N":
                     R.save(studentname)
                 else:
                     R.save()
 
 
-#dates = ["23/10/17", "30/10/17", "06/11/17", "13/11/17", "20/11/17",
-#    "27/11/17", "04/12/17", "11/12/17", "18/12/17", "01/01/18"]
 
-#datedata = yaml.load(file("sampledate.yml", 'r'))
-#print datedata
-#ReportWriter.WriteReports("Template1.docx", "upperint.yml",
-#    "upper", "sampledate.yml")
+# Test 1: try to alter files in UIntAM directory - wrong dates.
+#ReportWriter.WriteReports("T", "UIntAM", "sampledatewrong.yml");
 
-print "Hello"
-# Modifications
-# A Mode (New, Existing, All in Directory)
-# B Add filename extension ("docx")
-# C Look for all files in a Directory
-# Document them.
-import glob
-cwd = os.getcwd()
-for file in glob.glob("*.docx"):
-    print(file)
+# Test 2: correct dates to good dates.
+# ReportWriter.WriteReports("T", "UIntAM", "sampledate.yml");
+
+# Test 3: create new template for UI stuff.
+#ReportWriter.WriteReports("N", "", "uintnewtemp.yml", "Mr Soo Young Kim.docx");
+# Test 4: create new student reports for new students.
+#ReportWriter.WriteReports("N", "UIntAM", "uintnewstud.yml", "TemplateUInt.docx");

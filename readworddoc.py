@@ -4,6 +4,16 @@ from docx import Document
 import yaml
 import os
 import glob
+import errno
+
+# From https://stackoverflow.com/questions/273192/how-can-i-create-a-directory-if-it-does-not-exist
+def make_sure_path_exists(path):
+    try:
+        os.makedirs(path)
+    except OSError as exception:
+        if exception.errno != errno.EEXIST:
+            raise
+
 
 class ReportWriter:
     ''' This is for writing student reports using Word. '''
@@ -65,7 +75,10 @@ class ReportWriter:
     def writedates(self, weekdates):
         ''' Writes the starting dates for each week of class to the report.
         Since there are 10 weeks, there should be ten values in weekdates.
-        By convention, they should be the starting Monday.
+        By convention, they should be the starting Monday for each week.
+
+        Note: there are two "Classroom Progress" rows in the report, and so we
+        don't write the dates for those row.
         '''
         for i in range(5):
             self.assigntexttotable(self.marks, i + 1, 1, 0, weekdates[i])
@@ -116,7 +129,8 @@ class ReportWriter:
             self.document.save(self.filename)
 
     @staticmethod
-    def WriteReports(mode, outputdir, reportyaml, template=None):
+    def WriteReports(mode, reportyaml, outputdir, isgradsubdir = False,
+        graddir="Graduated", template=None):
         ''' This is the main method for the ReportWriter class. Its purpose,
         as the name says, is to write reports, based on data in a YAML file,
         to Word documents in a directory. The WriteReports takes the following
@@ -124,7 +138,7 @@ class ReportWriter:
 
         mode: what is the main goal to be achived in using the function? The
         modes are:
-            - "N": for new: takes a template, writes the report data from the
+            - "N": for new: takes a template, writes the report data from a
             YAML file to it, and saves it as a file to the output directory. The
             file name of the report is always derived from the name of the
             student (which is in the report). This mode may overwrite existing
@@ -140,18 +154,34 @@ class ReportWriter:
             sets the term dates to new values specifed in the YAML file. This
             mode is used when there are existing reports that need to be reused
             for a new term.
-        outputdir: the name of the directory where reports need to be written.
-        This could be an absolute path, or one relative to the current working
-        directory.
         reportyaml: the YAML file that contains the report data. This should
         consist of several YAML documents. If there is data specifying the term
         dates, this should be the first document inside. (This function can
         automatically check if there is term date data.) Subsequent documents
         should all correspond to student data, with each student represented
-        by a single YAML document.
+        by a single YAML document inside the file.
+        outputdir: the name of the directory where reports need to be written.
+        This could be an absolute path, or one relative to the current working
+        directory.
+        isgradsubdir: whether reports for graduate students are written to a
+        subdirectory of outputdir (or not). The default is False. (See below on
+        what indicates a students is a "graduate".) This setting is ignored for
+        "T" mode.
+        graddir: the name of the subdirectory for reports for graduate students.
+        The default is "Graduated". Like above, this setting is ignored for
+        "T" mode.
         template: the file name of a .docx word which can be used as a template
         for creating templates. This is used with "N" (new) mode.
+
+        Note: for the purpose of this program, students with non-empty comment
+        information are considered "graduates", and students with empty comment
+        information are not considered graduates.
         '''
+
+        make_sure_path_exists(outputdir)
+        if isgradsubdir:
+            make_sure_path_exists(os.path.join(outputdir, graddir))
+
         reportdata = list(yaml.load_all(open(reportyaml, 'r')))
 
 # Check for date data and student data (if either thing exists)
@@ -175,21 +205,26 @@ class ReportWriter:
 
         else:
             for student in thestudents:
-                studentname = os.path.join(outputdir,
-                    student[0]["name"]+".docx")
+                basename = student[0]["name"]+".docx"
+                hascomment = False
+                if len(student) > 1 and student[1]["comment"]:
+                    hascomment = True
+                if hascomment and isgradsubdir:
+                    studentname = os.path.join(outputdir, graddir, basename)
+                else:
+                    studentname = os.path.join(outputdir, basename)
                 if mode == "N":
                     R = ReportWriter(template)
                 else:
                     R = ReportWriter(studentname)
-                R.writeinitial(student[0])
-                if thedates:
-                    R.writedates(thedates)
-                if len(student) > 1:
-                    if student[1]["comment"]:
-                        R.writecomment(student[1]["comment"])
+                if hascomment:
+                    R.writecomment(student[1]["comment"])
                 if len(student) > 2:
                     R.writemarks(student[2]["start"], student[2]["end"],
                         student[3:])
+                R.writeinitial(student[0])
+                if thedates:
+                    R.writedates(thedates)
                 if mode == "N":
                     R.save(studentname)
                 else:
@@ -206,4 +241,5 @@ class ReportWriter:
 # Test 3: create new template for UI stuff.
 #ReportWriter.WriteReports("N", "", "uintnewtemp.yml", "Mr Soo Young Kim.docx");
 # Test 4: create new student reports for new students.
-#ReportWriter.WriteReports("N", "UIntAM", "uintnewstud.yml", "TemplateUInt.docx");
+ReportWriter.WriteReports("N", "uintnewstud2018.yml", "UIntAM2018", True,
+    "Graduated", "TemplateUInt.docx");

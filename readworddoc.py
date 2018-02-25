@@ -243,3 +243,22 @@ class ReportWriter:
 # Test 4: create new student reports for new students.
 ReportWriter.WriteReports("N", "uintnewstud2018.yml", "UIntAM2018", True,
     "Graduated", "TemplateUInt.docx");
+
+import argparse
+parser = argparse.ArgumentParser(
+    description='Generate student reports in Word docx form from YAML')
+parser.add_argument('mode',
+    help='N (creating New docs); E (updating Existing docs); T (tidy dates)')
+parser.add_argument('reportyaml',
+    help='A YAML file containing student data')
+parser.add_argument('outputdir',
+    help='The output directory for generated student reports')
+parser.add_argument('--gradsub', dest='isgradsubdir', action='store_true',
+    help='Graduate students reports written to subdirectory of the output dir')
+parser.add_argument('--no-gradsub', dest='isgradsubdir', action='store_false',
+    help='Graduate students reports written directly to output dir')
+parser.set_defaults(isgradsubdir=True)
+parser.add_argument('--graddir', default="Graduated",
+    help='Subdirectory for graduate students (default: "Graduated")')
+parser.add_argument('--template', default="None",
+    help='Template file in docx format used for generating reports')

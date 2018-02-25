@@ -241,8 +241,8 @@ class ReportWriter:
 # Test 3: create new template for UI stuff.
 #ReportWriter.WriteReports("N", "", "uintnewtemp.yml", "Mr Soo Young Kim.docx");
 # Test 4: create new student reports for new students.
-ReportWriter.WriteReports("N", "uintnewstud2018.yml", "UIntAM2018", True,
-    "Graduated", "TemplateUInt.docx");
+#ReportWriter.WriteReports("N", "uintnewstud2018.yml", "UIntAM2018", True,
+#    "Graduated", "TemplateUInt.docx");
 
 import argparse
 parser = argparse.ArgumentParser(

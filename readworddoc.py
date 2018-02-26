@@ -230,19 +230,7 @@ class ReportWriter:
                 else:
                     R.save()
 
-
-
-# Test 1: try to alter files in UIntAM directory - wrong dates.
-#ReportWriter.WriteReports("T", "UIntAM", "sampledatewrong.yml");
-
-# Test 2: correct dates to good dates.
-# ReportWriter.WriteReports("T", "UIntAM", "sampledate.yml");
-
-# Test 3: create new template for UI stuff.
-#ReportWriter.WriteReports("N", "", "uintnewtemp.yml", "Mr Soo Young Kim.docx");
-# Test 4: create new student reports for new students.
-#ReportWriter.WriteReports("N", "uintnewstud2018.yml", "UIntAM2018", True,
-#    "Graduated", "TemplateUInt.docx");
+# This is where the command line arguments are read and understood.
 
 import argparse
 parser = argparse.ArgumentParser(
@@ -262,3 +250,6 @@ parser.add_argument('--graddir', default="Graduated",
     help='Subdirectory for graduate students (default: "Graduated")')
 parser.add_argument('--template', default="None",
     help='Template file in docx format used for generating reports')
+args = parser.parse_args()
+ReportWriter.WriteReports(args.mode, args.reportyaml, args.outputdir,
+    args.isgradsubdir, args.graddir, args.template)

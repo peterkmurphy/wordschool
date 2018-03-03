@@ -1,4 +1,17 @@
-# Some sample reports, but with no dates.
+# Some sample reports. The first document sets the term (of 10 weeks) for the
+# reports. Each item is the date of the starting Monday for that week.
+---
+- 23/10/17
+- 30/10/17
+- 06/11/17
+- 13/11/17
+- 20/11/17
+- 27/11/17
+- 04/12/17
+- 11/12/17
+- 18/12/17
+- 01/01/18
+...
 ---
 # King Gazebo
 - {name: "King Gizzard", id: "5678", sd: "01/02/2001", ed: "11/09/2001"}

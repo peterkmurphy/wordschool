@@ -179,7 +179,7 @@ class ReportWriter:
         '''
 
         make_sure_path_exists(outputdir)
-        if isgradsubdir:
+        if isgradsubdir and mode != 'T':
             make_sure_path_exists(os.path.join(outputdir, graddir))
 
         reportdata = list(yaml.load_all(open(reportyaml, 'r')))
